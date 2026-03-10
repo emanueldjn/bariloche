@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, MapPin, Clock, Lightbulb, Plus, Edit3, Trash2, Check, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Clock, Lightbulb, Plus, Trash2, Check, X, Wifi, WifiOff, Loader } from 'lucide-react';
 import { itinerary as defaultItinerary } from '@/data/itinerary';
-import { Activity, DaySchedule } from '@/data/types';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Activity } from '@/data/types';
+import { useSharedData } from '@/hooks/useSharedData';
 
 const categoryConfig: Record<string, { label: string; emoji: string; cls: string }> = {
     transporte: { label: 'Transporte', emoji: '✈️', cls: 'cat-transporte' },
@@ -21,9 +21,6 @@ const cityColors: Record<string, string> = {
     'Uruguai 🇺🇾': '#059669',
     'Bariloche 🏔️': '#6366f1',
 };
-
-type CustomActivities = Record<string, Activity[]>;
-type DeletedActivities = Record<string, string[]>;
 
 function ActivityCard({ activity, onDelete }: { activity: Activity; onDelete?: () => void }) {
     const [expanded, setExpanded] = useState(false);
@@ -53,11 +50,10 @@ function ActivityCard({ activity, onDelete }: { activity: Activity; onDelete?: (
                             </p>
                         )}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
                         {onDelete && (
                             <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                                className="p-1.5 rounded-lg"
-                                style={{ background: '#fef2f2' }}>
+                                className="p-1.5 rounded-lg" style={{ background: '#fef2f2' }}>
                                 <Trash2 size={13} style={{ color: 'var(--accent-red)' }} />
                             </button>
                         )}
@@ -97,27 +93,32 @@ function ActivityCard({ activity, onDelete }: { activity: Activity; onDelete?: (
 
 export default function RoteiroPage() {
     const [activeDay, setActiveDay] = useState(0);
-    const [customActivities, setCustomActivities] = useLocalStorage<CustomActivities>('roteiro-custom', {});
-    const [deletedActivities, setDeletedActivities] = useLocalStorage<DeletedActivities>('roteiro-deleted', {});
     const [showAddForm, setShowAddForm] = useState(false);
-    const [newActivity, setNewActivity] = useState({ title: '', time: '10:00', category: 'passeio', location: '', description: '', tips: '' });
+    const [newActivity, setNewActivity] = useState({
+        title: '', time: '10:00', category: 'passeio', location: '', description: '', tips: '',
+    });
+    const { data, loading, online, update } = useSharedData();
 
     const day = defaultItinerary[activeDay];
     const cityColor = day.city ? (cityColors[day.city] || '#3b82f6') : '#3b82f6';
 
-    const baseActivities = day.activities.filter(a => !(deletedActivities[day.date] || []).includes(a.id));
-    const extras = customActivities[day.date] || [];
+    const baseActivities = day.activities.filter(
+        a => !(data.deletedActivities[day.date] || []).includes(a.id)
+    );
+    const extras = data.customActivities[day.date] || [];
     const allActivities = [...baseActivities, ...extras].sort((a, b) => a.time.localeCompare(b.time));
 
-    const deleteBase = (id: string) => {
-        const prev = deletedActivities[day.date] || [];
-        setDeletedActivities({ ...deletedActivities, [day.date]: [...prev, id] });
+    const deleteBase = async (id: string) => {
+        const prev = data.deletedActivities[day.date] || [];
+        await update({ deletedActivities: { ...data.deletedActivities, [day.date]: [...prev, id] } });
     };
-    const deleteCustom = (id: string) => {
-        const prev = customActivities[day.date] || [];
-        setCustomActivities({ ...customActivities, [day.date]: prev.filter(a => a.id !== id) });
+
+    const deleteCustom = async (id: string) => {
+        const prev = data.customActivities[day.date] || [];
+        await update({ customActivities: { ...data.customActivities, [day.date]: prev.filter(a => a.id !== id) } });
     };
-    const addActivity = () => {
+
+    const addActivity = async () => {
         if (!newActivity.title.trim()) return;
         const activity: Activity = {
             id: `custom-${Date.now()}`,
@@ -129,33 +130,54 @@ export default function RoteiroPage() {
             tips: newActivity.tips || undefined,
             participants: ['emanuel', 'esteffany', 'fernanda', 'juan', 'netinha'],
         };
-        const prev = customActivities[day.date] || [];
-        setCustomActivities({ ...customActivities, [day.date]: [...prev, activity] });
+        const prev = data.customActivities[day.date] || [];
+        await update({ customActivities: { ...data.customActivities, [day.date]: [...prev, activity] } });
         setNewActivity({ title: '', time: '10:00', category: 'passeio', location: '', description: '', tips: '' });
         setShowAddForm(false);
     };
 
-    // Group days by city
-    const daysByCityGroup: { city: string; days: typeof defaultItinerary }[] = [];
+    // Group days by city for tabs
+    const daysByCityGroup: { city: string; days: (typeof defaultItinerary[0] & { _idx: number })[] }[] = [];
     defaultItinerary.forEach((d, i) => {
         const city = d.city || 'Outras';
         const last = daysByCityGroup[daysByCityGroup.length - 1];
-        if (!last || last.city !== city) daysByCityGroup.push({ city, days: [{ ...d, _idx: i } as any] });
-        else last.days.push({ ...d, _idx: i } as any);
+        if (!last || last.city !== city) daysByCityGroup.push({ city, days: [{ ...d, _idx: i }] });
+        else last.days.push({ ...d, _idx: i });
     });
 
     return (
         <main className="pb-safe">
+            {/* Header */}
             <div className="px-4 pt-6 pb-2">
-                <h1 className="text-2xl font-extrabold gradient-text" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    📅 Roteiro
-                </h1>
-                <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                    21 ago – 31 ago • 3 destinos • 11 dias
-                </p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-extrabold gradient-text" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            📅 Roteiro
+                        </h1>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                            21 ago – 31 ago • 3 destinos • 11 dias
+                        </p>
+                    </div>
+                    {/* Sync indicator */}
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                        style={{
+                            background: loading ? '#f9fafb' : online ? '#f0fdf4' : '#fef2f2',
+                            border: `1px solid ${loading ? '#e5e7eb' : online ? '#bbf7d0' : '#fecaca'}`,
+                        }}>
+                        {loading
+                            ? <Loader size={11} style={{ color: '#9ca3af' }} className="animate-spin" />
+                            : online
+                                ? <Wifi size={11} style={{ color: '#059669' }} />
+                                : <WifiOff size={11} style={{ color: '#dc2626' }} />}
+                        <span className="text-[10px] font-bold"
+                            style={{ color: loading ? '#9ca3af' : online ? '#059669' : '#dc2626' }}>
+                            {loading ? 'Conectando...' : online ? 'Ao vivo' : 'Offline'}
+                        </span>
+                    </div>
+                </div>
             </div>
 
-            {/* Day tabs - grouped by city */}
+            {/* Day tabs grouped by city */}
             <div className="px-4 pb-3">
                 {daysByCityGroup.map((group) => (
                     <div key={group.city} className="mb-3">
@@ -164,7 +186,7 @@ export default function RoteiroPage() {
                             {group.city}
                         </p>
                         <div className="flex gap-2 overflow-x-auto pb-1">
-                            {group.days.map((d: any) => {
+                            {group.days.map((d) => {
                                 const idx = d._idx;
                                 const isActive = activeDay === idx;
                                 const col = cityColors[d.city || ''] || '#3b82f6';
@@ -223,19 +245,17 @@ export default function RoteiroPage() {
                                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.04 }}>
                                 <ActivityCard activity={activity}
-                                    onDelete={isCustom
-                                        ? () => deleteCustom(activity.id)
-                                        : () => deleteBase(activity.id)} />
+                                    onDelete={isCustom ? () => deleteCustom(activity.id) : () => deleteBase(activity.id)} />
                             </motion.div>
                         );
                     })}
 
-                    {/* Add activity button */}
+                    {/* Add activity */}
                     {showAddForm ? (
                         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                             className="card p-4 space-y-3">
                             <p className="font-bold text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                                ➕ Nova atividade
+                                ➕ Nova atividade — <span style={{ color: cityColor }}>{day.shortDate}</span>
                             </p>
                             {[
                                 { label: 'Título *', key: 'title', placeholder: 'ex: Visita ao mercado' },
@@ -247,11 +267,10 @@ export default function RoteiroPage() {
                                 <div key={f.key}>
                                     <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-muted)' }}>{f.label}</label>
                                     <input type="text" placeholder={f.placeholder}
-                                        value={(newActivity as any)[f.key]}
+                                        value={(newActivity as Record<string, string>)[f.key]}
                                         onChange={(e) => setNewActivity({ ...newActivity, [f.key]: e.target.value })}
                                         className="w-full rounded-xl px-3.5 py-2.5 text-sm"
-                                        style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', color: 'var(--text-primary)' }}
-                                    />
+                                        style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', color: 'var(--text-primary)' }} />
                                 </div>
                             ))}
                             <div>
@@ -269,7 +288,7 @@ export default function RoteiroPage() {
                                 <button onClick={addActivity}
                                     className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-1.5"
                                     style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }}>
-                                    <Check size={14} /> Adicionar
+                                    <Check size={14} /> Salvar para o grupo
                                 </button>
                                 <button onClick={() => setShowAddForm(false)}
                                     className="px-4 py-2.5 rounded-xl text-sm font-bold"
@@ -282,7 +301,7 @@ export default function RoteiroPage() {
                         <motion.button whileTap={{ scale: 0.97 }} onClick={() => setShowAddForm(true)}
                             className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2"
                             style={{ background: '#eff6ff', border: '1.5px dashed #bfdbfe', color: '#2563eb' }}>
-                            <Plus size={16} /> Adicionar atividade neste dia
+                            <Plus size={16} /> Adicionar atividade · todos vão ver
                         </motion.button>
                     )}
                 </motion.div>

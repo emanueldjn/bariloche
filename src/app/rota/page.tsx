@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Navigation, MapPin, GripVertical, ExternalLink } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useSharedData } from '@/hooks/useSharedData';
 
 interface Stop {
     id: string;
@@ -48,7 +49,8 @@ const PRESET_STOPS = {
 
 export default function RotaPage() {
     const [stops, setStops] = useLocalStorage<Stop[]>('car-route-stops', []);
-    const [savedRoutes, setSavedRoutes] = useLocalStorage<SavedRoute[]>('car-saved-routes', []);
+    const { data, update } = useSharedData();
+    const savedRoutes = data.savedRoutes;
     const [routeName, setRouteName] = useState('');
     const [selectedCity, setSelectedCity] = useState<keyof typeof PRESET_STOPS>('Bariloche');
     const [newStopLabel, setNewStopLabel] = useState('');
@@ -85,12 +87,12 @@ export default function RotaPage() {
     const saveRoute = () => {
         if (!routeName.trim() || stops.length === 0) return;
         const route: SavedRoute = { id: `r-${Date.now()}`, name: routeName, stops: [...stops] };
-        setSavedRoutes([...savedRoutes, route]);
+        update({ savedRoutes: [...savedRoutes, route] });
         setRouteName('');
     };
 
     const loadRoute = (route: SavedRoute) => setStops([...route.stops]);
-    const deleteRoute = (id: string) => setSavedRoutes(savedRoutes.filter(r => r.id !== id));
+    const deleteRoute = (id: string) => update({ savedRoutes: savedRoutes.filter(r => r.id !== id) });
 
     return (
         <main className="pb-safe">

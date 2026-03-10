@@ -6,7 +6,7 @@ import CountdownTimer from '@/components/CountdownTimer';
 import ParticipantAvatar from '@/components/ParticipantAvatar';
 import { participants } from '@/data/participants';
 import { itinerary } from '@/data/itinerary';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useSharedData } from '@/hooks/useSharedData';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -31,11 +31,13 @@ interface AccommodationInfo {
 const defaultAccom: AccommodationInfo = { ba: '', bariloche: '', phone: '', notes: '' };
 
 export default function HomePage() {
-  const [accom, setAccom] = useLocalStorage<AccommodationInfo>('trip-accommodation', defaultAccom);
+  const { data, update } = useSharedData();
+  const accom = data.accommodation;
   const [editingAccom, setEditingAccom] = useState(false);
-  const [draft, setDraft] = useState<AccommodationInfo>(defaultAccom);
+  const [draft, setDraft] = useState(accom);
 
   const openEdit = () => { setDraft(accom); setEditingAccom(true); };
+  const saveAccom = async () => { await update({ accommodation: draft }); setEditingAccom(false); };
 
   return (
     <main className="pb-safe px-4 pt-6">
@@ -240,11 +242,11 @@ export default function HomePage() {
                 </div>
               ))}
               <button
-                onClick={() => { setAccom(draft); setEditingAccom(false); }}
+                onClick={saveAccom}
                 className="w-full py-3 rounded-2xl font-bold text-white text-sm"
                 style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }}
               >
-                Salvar hospedagem
+                Salvar hospedagem · todos vão ver
               </button>
             </div>
           </motion.div>
