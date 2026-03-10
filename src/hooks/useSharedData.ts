@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Activity } from '@/data/types';
 
@@ -70,10 +70,11 @@ export function useSharedData() {
 
     const update = useCallback(async (partial: Partial<SharedData>) => {
         try {
-            await updateDoc(docRef, partial as Record<string, unknown>);
-        } catch {
-            // Document might not exist yet
-            await setDoc(docRef, { ...defaultData, ...partial });
+            // setDoc with merge:true creates the doc if it doesn't exist
+            // and only updates the specified fields (like updateDoc)
+            await setDoc(docRef, partial, { merge: true });
+        } catch (err) {
+            console.error('[Firebase] Failed to save shared data:', err);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
