@@ -73,7 +73,7 @@ export default function ChecklistPage() {
                             className="h-full rounded-full"
                             style={{ background: 'linear-gradient(90deg, #10b981, #06b6d4)' }}
                             animate={{ width: `${progress}%` }}
-                            transition={{ duration: 0.5, ease: 'easeOut' }}
+                            transition={{ duration: 0.5, ease: 'easeOut' as const }}
                         />
                     </div>
                     {progress === 100 && (
