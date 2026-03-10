@@ -44,7 +44,6 @@ html {
   font-family: 'Inter', 'Segoe UI', sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  overscroll-behavior: none;
 }
 
 body {

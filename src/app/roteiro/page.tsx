@@ -124,12 +124,12 @@ export default function RoteiroPage() {
             id: `custom-${Date.now()}`,
             time: newActivity.time,
             title: newActivity.title,
-            description: newActivity.description,
+            description: newActivity.description || '',
             category: newActivity.category as Activity['category'],
-            location: newActivity.location || undefined,
-            tips: newActivity.tips || undefined,
             participants: ['emanuel', 'esteffany', 'fernanda', 'juan', 'netinha'],
         };
+        if (newActivity.location?.trim()) activity.location = newActivity.location;
+        if (newActivity.tips?.trim()) activity.tips = newActivity.tips;
         const prev = data.customActivities[day.date] || [];
         await update({ customActivities: { ...data.customActivities, [day.date]: [...prev, activity] } });
         setNewActivity({ title: '', time: '10:00', category: 'passeio', location: '', description: '', tips: '' });
