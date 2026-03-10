@@ -70,9 +70,9 @@ export default function HomePage() {
         >
           <p className="text-center text-xs font-semibold uppercase tracking-wider mb-3"
             style={{ color: 'var(--text-muted)' }}>
-            ⏳ Contagem regressiva — começa 21/08
+            ⏳ Conta regressiva — começa 21/08/2026
           </p>
-          <CountdownTimer targetDate="2025-08-21T00:00:00" />
+          <CountdownTimer targetDate="2026-08-21T00:00:00" />
         </motion.div>
 
         {/* Accommodation - Editable */}

@@ -3,7 +3,7 @@ import { DaySchedule } from './types';
 export const itinerary: DaySchedule[] = [
     // ── BUENOS AIRES ──────────────────────────────────────────────────────────
     {
-        date: '2025-08-21',
+        date: '2026-08-21',
         dayLabel: 'Dia 1',
         shortDate: '21/08',
         weekday: 'Quinta',
@@ -44,7 +44,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-22',
+        date: '2026-08-22',
         dayLabel: 'Dia 2',
         shortDate: '22/08',
         weekday: 'Sexta',
@@ -96,7 +96,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-23',
+        date: '2026-08-23',
         dayLabel: 'Dia 3',
         shortDate: '23/08',
         weekday: 'Sábado',
@@ -147,7 +147,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-24',
+        date: '2026-08-24',
         dayLabel: 'Dia 4',
         shortDate: '24/08',
         weekday: 'Domingo',
@@ -220,7 +220,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-25',
+        date: '2026-08-25',
         dayLabel: 'Dia 5',
         shortDate: '25/08',
         weekday: 'Segunda',
@@ -260,7 +260,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-26',
+        date: '2026-08-26',
         dayLabel: 'Dia 6',
         shortDate: '26/08',
         weekday: 'Terça',
@@ -300,7 +300,7 @@ export const itinerary: DaySchedule[] = [
     },
     // ── BARILOCHE ─────────────────────────────────────────────────────────────
     {
-        date: '2025-08-27',
+        date: '2026-08-27',
         dayLabel: 'Dia 7',
         shortDate: '27/08',
         weekday: 'Quarta',
@@ -330,7 +330,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-28',
+        date: '2026-08-28',
         dayLabel: 'Dia 8',
         shortDate: '28/08',
         weekday: 'Quinta',
@@ -379,7 +379,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-29',
+        date: '2026-08-29',
         dayLabel: 'Dia 9',
         shortDate: '29/08',
         weekday: 'Sexta',
@@ -449,7 +449,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-30',
+        date: '2026-08-30',
         dayLabel: 'Dia 10',
         shortDate: '30/08',
         weekday: 'Sábado',
@@ -501,7 +501,7 @@ export const itinerary: DaySchedule[] = [
         ],
     },
     {
-        date: '2025-08-31',
+        date: '2026-08-31',
         dayLabel: 'Dia 11',
         shortDate: '31/08',
         weekday: 'Domingo',
