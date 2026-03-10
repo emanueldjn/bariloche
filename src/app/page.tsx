@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Plane, Mountain, Heart, MapPin, Edit3 } from 'lucide-react';
 import CountdownTimer from '@/components/CountdownTimer';
+import ParticipantAvatar from '@/components/ParticipantAvatar';
 import { participants } from '@/data/participants';
 import { itinerary } from '@/data/itinerary';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -138,10 +139,7 @@ export default function HomePage() {
           <div className="flex gap-2">
             {participants.map((p) => (
               <div key={p.id} className="flex-1 flex flex-col items-center gap-2 py-3 px-1 rounded-2xl card">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                  style={{ background: `${p.color}18`, border: `2px solid ${p.color}35` }}>
-                  {p.emoji}
-                </div>
+                <ParticipantAvatar participant={p} size={44} />
                 <span className="text-[10px] font-bold text-center" style={{ color: p.color }}>{p.name}</span>
               </div>
             ))}

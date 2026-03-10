@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Plane, Calendar, Phone } from 'lucide-react';
 import { participants } from '@/data/participants';
+import ParticipantAvatar from '@/components/ParticipantAvatar';
 
 const tips = [
     { icon: '💱', text: 'Melhor câmbio: Blue (paralelo). Evite casas de câmbio em aeroportos.' },
@@ -46,10 +47,7 @@ export default function GrupoPage() {
                             transition={{ delay: i * 0.06 }}
                             className="card p-4 flex items-center gap-4 overflow-hidden relative">
                             <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: p.color }} />
-                            <div className="w-13 h-13 rounded-2xl flex items-center justify-center text-3xl w-14 h-14 shrink-0"
-                                style={{ background: `${p.color}12`, border: `2px solid ${p.color}28` }}>
-                                {p.emoji}
-                            </div>
+                            <ParticipantAvatar participant={p} size={56} className="rounded-2xl shrink-0" />
                             <div className="flex-1 pl-1">
                                 <h3 className="font-bold text-base" style={{ fontFamily: 'Poppins, sans-serif', color: p.color }}>
                                     {p.name}

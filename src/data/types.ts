@@ -2,6 +2,7 @@ export interface Participant {
   id: string;
   name: string;
   emoji: string;
+  photo?: string; // path relative to /public, ex: '/fotos/emanuel.jpg'
   color: string;
   arrival: string;
   departure: string;
