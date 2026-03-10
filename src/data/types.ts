@@ -21,10 +21,11 @@ export interface Activity {
 }
 
 export interface DaySchedule {
-  date: string; // "2025-08-27"
-  dayLabel: string; // "Dia 1"
-  shortDate: string; // "27/08"
-  weekday: string; // "Quarta"
+  date: string;
+  dayLabel: string;
+  shortDate: string;
+  weekday: string;
+  city?: string;
   activities: Activity[];
   weather?: { min: number; max: number; icon: string };
 }

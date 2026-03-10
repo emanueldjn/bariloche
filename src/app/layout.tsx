@@ -3,13 +3,13 @@ import './globals.css';
 import BottomNav from '@/components/BottomNav';
 
 export const metadata: Metadata = {
-  title: 'Bariloche 2025 🏔️',
-  description: 'Roteiro, checklist e lugares da nossa viagem para Bariloche — 27 a 31 de Agosto de 2025',
+  title: 'Viagem 2025 🏔️',
+  description: 'Buenos Aires + Uruguai + Bariloche — 21 a 31 de Agosto 2025',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Bariloche 2025',
+    statusBarStyle: 'default',
+    title: 'Viagem 2025',
   },
   icons: {
     icon: '/icon-192.png',
@@ -22,7 +22,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#0a0a0f',
+  themeColor: '#f8f7f4',
 };
 
 export default function RootLayout({
