@@ -1,83 +1,84 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Activity } from '@/data/types';
+import { AccommodationInfo, Activity, RouteStop, SavedRoute } from '@/data/types';
+import { defaultAccommodation } from '@/data/trip';
 
-// The single shared document for the whole group
-const SHARED_DOC = 'viagem-2026/shared';
+const SHARED_DOC = 'viagens/ferias-maio-2026';
 
 export interface SharedData {
-    // Roteiro
-    customActivities: Record<string, Activity[]>;   // date → activities[]
-    deletedActivities: Record<string, string[]>;     // date → activity IDs
-
-    // Accommodation
-    accommodation: {
-        ba: string;
-        bariloche: string;
-        phone: string;
-        notes: string;
-    };
-
-    // Car routes
-    savedRoutes: Array<{
-        id: string;
-        name: string;
-        stops: Array<{ id: string; label: string; address: string }>;
-    }>;
+  customActivities: Record<string, Activity[]>;
+  deletedActivities: Record<string, string[]>;
+  accommodation: AccommodationInfo;
+  routeDraft: RouteStop[];
+  savedRoutes: SavedRoute[];
+  checklistState: Record<string, boolean>;
 }
 
 const defaultData: SharedData = {
-    customActivities: {},
-    deletedActivities: {},
-    accommodation: { ba: '', bariloche: '', phone: '', notes: '' },
-    savedRoutes: [],
+  customActivities: {},
+  deletedActivities: {},
+  accommodation: defaultAccommodation,
+  routeDraft: [],
+  savedRoutes: [],
+  checklistState: {},
 };
 
 export function useSharedData() {
-    const [data, setData] = useState<SharedData>(defaultData);
-    const [loading, setLoading] = useState(true);
-    const [online, setOnline] = useState(true);
+  const [data, setData] = useState<SharedData>(defaultData);
+  const [loading, setLoading] = useState(true);
+  const [online, setOnline] = useState(true);
 
-    // Parse SHARED_DOC into collection/document
-    const [col, docId] = SHARED_DOC.split('/');
-    const docRef = doc(db, col, docId);
+  const [collectionName, docId] = SHARED_DOC.split('/');
+  const docRef = doc(db, collectionName, docId);
 
-    useEffect(() => {
-        // Real-time listener
-        const unsub = onSnapshot(
-            docRef,
-            (snap) => {
-                setLoading(false);
-                setOnline(true);
-                if (snap.exists()) {
-                    setData({ ...defaultData, ...snap.data() } as SharedData);
-                } else {
-                    // First use — create the document with defaults
-                    setDoc(docRef, defaultData);
-                }
+  useEffect(() => {
+    const unsub = onSnapshot(
+      docRef,
+      (snap) => {
+        setLoading(false);
+        setOnline(true);
+
+        if (snap.exists()) {
+          const incoming = snap.data() as Partial<SharedData>;
+
+          setData({
+            ...defaultData,
+            ...incoming,
+            accommodation: {
+              ...defaultData.accommodation,
+              ...(incoming.accommodation || {}),
             },
-            () => {
-                setLoading(false);
-                setOnline(false);
-            }
-        );
-        return () => unsub();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const update = useCallback(async (partial: Partial<SharedData>) => {
-        try {
-            // setDoc with merge:true creates the doc if it doesn't exist
-            // and only updates the specified fields (like updateDoc)
-            await setDoc(docRef, partial, { merge: true });
-        } catch (err) {
-            console.error('[Firebase] Failed to save shared data:', err);
+            routeDraft: incoming.routeDraft || defaultData.routeDraft,
+            savedRoutes: incoming.savedRoutes || defaultData.savedRoutes,
+            checklistState: incoming.checklistState || defaultData.checklistState,
+          });
+          return;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
-    return { data, loading, online, update };
+        setDoc(docRef, defaultData);
+      },
+      () => {
+        setLoading(false);
+        setOnline(false);
+      }
+    );
+
+    return () => unsub();
+  }, [docRef]);
+
+  const update = useCallback(
+    async (partial: Partial<SharedData>) => {
+      try {
+        await setDoc(docRef, partial, { merge: true });
+      } catch (err) {
+        console.error('[Firebase] Failed to save shared data:', err);
+      }
+    },
+    [docRef]
+  );
+
+  return { data, loading, online, update };
 }

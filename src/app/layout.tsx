@@ -1,15 +1,16 @@
 import type { Metadata, Viewport } from 'next';
-import './globals.css';
 import BottomNav from '@/components/BottomNav';
+import { tripMeta } from '@/data/trip';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Viagem 2025 🏔️',
-  description: 'Buenos Aires + Uruguai + Bariloche — 21 a 31 de Agosto 2025',
+  title: tripMeta.title,
+  description: tripMeta.description,
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Viagem 2025',
+    title: tripMeta.shortTitle,
   },
   icons: {
     icon: '/icon-192.png',
@@ -27,9 +28,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="pt-BR">
       <head>

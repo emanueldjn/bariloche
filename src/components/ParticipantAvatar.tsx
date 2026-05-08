@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { Participant } from '@/data/types';
 
@@ -16,7 +17,7 @@ export default function ParticipantAvatar({ participant: p, size = 40, className
 
     return (
         <div
-            className={`rounded-full flex items-center justify-center shrink-0 overflow-hidden ${className}`}
+            className={`relative rounded-full flex items-center justify-center shrink-0 overflow-hidden ${className}`}
             style={{
                 width: size,
                 height: size,
@@ -25,12 +26,14 @@ export default function ParticipantAvatar({ participant: p, size = 40, className
                 fontSize: size * 0.5,
             }}
         >
-            {showPhoto ? (
-                <img
+            {showPhoto && p.photo ? (
+                <Image
                     src={p.photo}
                     alt={p.name}
                     onError={() => setImgError(true)}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    fill
+                    sizes={`${size}px`}
+                    style={{ objectFit: 'cover' }}
                 />
             ) : (
                 <span role="img" aria-label={p.name}>{p.emoji}</span>

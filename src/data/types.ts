@@ -31,6 +31,29 @@ export interface DaySchedule {
   weather?: { min: number; max: number; icon: string };
 }
 
+export interface AccommodationInfo {
+  losAngeles: string;
+  tokyo: string;
+  kyoto: string;
+  osaka: string;
+  seoul: string;
+  madrid: string;
+  phone: string;
+  notes: string;
+}
+
+export interface RouteStop {
+  id: string;
+  label: string;
+  address: string;
+}
+
+export interface SavedRoute {
+  id: string;
+  name: string;
+  stops: RouteStop[];
+}
+
 export interface ChecklistCategory {
   id: string;
   label: string;
@@ -48,6 +71,7 @@ export interface ChecklistItem {
 export interface Place {
   id: string;
   name: string;
+  city: string;
   category: 'hotel' | 'restaurante' | 'atracao' | 'compras' | 'bar' | 'transporte';
   description: string;
   address: string;
