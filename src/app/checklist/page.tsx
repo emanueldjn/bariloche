@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, CheckCircle, ChevronDown, ChevronUp, Circle } from 'lucide-react';
+import SyncStatus from '@/components/SyncStatus';
 import { checklist } from '@/data/checklist';
 import { ChecklistItem } from '@/data/types';
 import { useSharedData } from '@/hooks/useSharedData';
 
 export default function ChecklistPage() {
-  const { data, update } = useSharedData();
+  const { data, syncMessage, syncState, update } = useSharedData();
   const checked = data.checklistState;
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(Object.fromEntries(checklist.map((category) => [category.id, true])));
 
@@ -34,6 +35,10 @@ export default function ChecklistPage() {
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
           Tudo que o grupo marcar aqui aparece nos outros celulares
         </p>
+      </div>
+
+      <div className="px-4 pb-4">
+        <SyncStatus state={syncState} message={syncMessage} />
       </div>
 
       <div className="px-4 pb-4">

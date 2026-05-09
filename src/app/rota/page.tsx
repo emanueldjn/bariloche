@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Navigation, Plus, Trash2 } from 'lucide-react';
+import SyncStatus from '@/components/SyncStatus';
 import { routePresets } from '@/data/trip';
 import { RouteStop, SavedRoute } from '@/data/types';
 import { useSharedData } from '@/hooks/useSharedData';
@@ -17,7 +18,7 @@ function slugify(value: string) {
 }
 
 export default function RotaPage() {
-  const { data, update } = useSharedData();
+  const { data, syncMessage, syncState, update } = useSharedData();
   const stops = data.routeDraft;
   const savedRoutes = data.savedRoutes;
   const presetCities = Object.keys(routePresets) as Array<keyof typeof routePresets>;
@@ -26,6 +27,7 @@ export default function RotaPage() {
   const [newStopLabel, setNewStopLabel] = useState('');
   const [newStopAddress, setNewStopAddress] = useState('');
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const saving = syncState === 'connecting' || syncState === 'syncing';
 
   const setStops = async (nextStops: RouteStop[]) => {
     await update({ routeDraft: nextStops });
@@ -63,17 +65,22 @@ export default function RotaPage() {
       return;
     }
 
-    await setStops([
-      ...stops,
-      {
-        id: createStopId(newStopLabel, newStopAddress),
-        label: newStopLabel,
-        address: newStopAddress,
-      },
-    ]);
-    setNewStopLabel('');
-    setNewStopAddress('');
-    setShowCustomForm(false);
+    const saved = await update({
+      routeDraft: [
+        ...stops,
+        {
+          id: createStopId(newStopLabel, newStopAddress),
+          label: newStopLabel,
+          address: newStopAddress,
+        },
+      ],
+    });
+
+    if (saved) {
+      setNewStopLabel('');
+      setNewStopAddress('');
+      setShowCustomForm(false);
+    }
   };
 
   const openInMaps = () => {
@@ -106,8 +113,10 @@ export default function RotaPage() {
       name: routeName,
       stops: [...stops],
     };
-    await update({ savedRoutes: [...savedRoutes, route] });
-    setRouteName('');
+    const saved = await update({ savedRoutes: [...savedRoutes, route] });
+    if (saved) {
+      setRouteName('');
+    }
   };
 
   const loadRoute = async (route: SavedRoute) => {
@@ -127,6 +136,10 @@ export default function RotaPage() {
         <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
           Monte um trajeto e compartilhe o mesmo rascunho com o grupo
         </p>
+      </div>
+
+      <div className="px-4 pb-4">
+        <SyncStatus state={syncState} message={syncMessage} />
       </div>
 
       <div className="px-4 space-y-5">
@@ -214,8 +227,13 @@ export default function RotaPage() {
               className="flex-1 rounded-xl px-3.5 py-2.5 text-sm"
               style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', color: 'var(--text-primary)' }}
             />
-            <button onClick={() => void saveRoute()} className="px-4 py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: 'var(--accent-primary)' }}>
-              Salvar
+            <button
+              onClick={() => void saveRoute()}
+              disabled={saving}
+              className="px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+              style={{ background: 'var(--accent-primary)', opacity: saving ? 0.8 : 1 }}
+            >
+              {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         )}
@@ -320,8 +338,13 @@ export default function RotaPage() {
               style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', color: 'var(--text-primary)' }}
             />
             <div className="flex gap-2">
-              <button onClick={() => void addCustom()} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: 'var(--accent-primary)' }}>
-                Adicionar
+              <button
+                onClick={() => void addCustom()}
+                disabled={saving}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ background: 'var(--accent-primary)', opacity: saving ? 0.8 : 1 }}
+              >
+                {saving ? 'Salvando...' : 'Adicionar'}
               </button>
               <button onClick={() => setShowCustomForm(false)} className="px-4 py-2.5 rounded-xl text-sm font-bold" style={{ background: '#f3f4f6', color: 'var(--text-secondary)' }}>
                 Cancelar

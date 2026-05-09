@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import CountdownTimer from '@/components/CountdownTimer';
 import ParticipantAvatar from '@/components/ParticipantAvatar';
+import SyncStatus from '@/components/SyncStatus';
 import { itinerary } from '@/data/itinerary';
 import { participants } from '@/data/participants';
 import { accommodationFields, defaultAccommodation, tripCityGroups, tripMeta } from '@/data/trip';
@@ -15,10 +16,11 @@ import { useSharedData } from '@/hooks/useSharedData';
 const stayFields = accommodationFields.filter((field) => !['phone', 'notes'].includes(field.key));
 
 export default function HomePage() {
-  const { data, update } = useSharedData();
+  const { data, syncMessage, syncState, update } = useSharedData();
   const accom = data.accommodation || defaultAccommodation;
   const [editingAccom, setEditingAccom] = useState(false);
   const [draft, setDraft] = useState<AccommodationInfo>(accom);
+  const saving = syncState === 'connecting' || syncState === 'syncing';
 
   const summaryGroups = tripCityGroups
     .map((group) => ({
@@ -33,8 +35,10 @@ export default function HomePage() {
   };
 
   const saveAccom = async () => {
-    await update({ accommodation: draft });
-    setEditingAccom(false);
+    const saved = await update({ accommodation: draft });
+    if (saved) {
+      setEditingAccom(false);
+    }
   };
 
   return (
@@ -55,10 +59,10 @@ export default function HomePage() {
           <div className="relative">
             <p className="text-xs font-semibold uppercase tracking-widest opacity-80 mb-1">{tripMeta.dateRangeLabel}</p>
             <h1 className="text-3xl font-extrabold mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              {tripMeta.heroLines.slice(0, 3).join(' · ')}
+              {tripMeta.heroLines.slice(0, 3).join(' - ')}
             </h1>
             <h1 className="text-3xl font-extrabold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              {tripMeta.heroLines.slice(3).join(' · ')}
+              {tripMeta.heroLines.slice(3).join(' - ')}
             </h1>
             <p className="text-sm opacity-80 mt-2">{tripMeta.heroSubtitle}</p>
           </div>
@@ -77,6 +81,10 @@ export default function HomePage() {
             completedSubtitle={tripMeta.completedSubtitle}
             activeEmoji="🌍"
           />
+        </motion.div>
+
+        <motion.div variants={{ hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }}>
+          <SyncStatus state={syncState} message={syncMessage} />
         </motion.div>
 
         <motion.div variants={{ hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }}>
@@ -178,7 +186,7 @@ export default function HomePage() {
                       {group.label}
                     </p>
                     <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                      {group.days.length} dia{group.days.length > 1 ? 's' : ''} · {group.days[0]?.shortDate}-{group.days[group.days.length - 1]?.shortDate}
+                      {group.days.length} dia{group.days.length > 1 ? 's' : ''} - {group.days[0]?.shortDate}-{group.days[group.days.length - 1]?.shortDate}
                     </p>
                   </div>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -225,6 +233,7 @@ export default function HomePage() {
               </button>
             </div>
             <div className="space-y-4">
+              <SyncStatus state={syncState} message={syncMessage} />
               {accommodationFields.map((field) => (
                 <div key={field.key}>
                   <label className="block text-xs font-bold mb-1.5" style={{ color: 'var(--text-secondary)' }}>
@@ -246,10 +255,14 @@ export default function HomePage() {
               ))}
               <button
                 onClick={saveAccom}
+                disabled={saving}
                 className="w-full py-3 rounded-2xl font-bold text-white text-sm"
-                style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }}
+                style={{
+                  background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                  opacity: saving ? 0.8 : 1,
+                }}
               >
-                Salvar hospedagem · todos vao ver
+                {saving ? 'Salvando...' : 'Salvar hospedagem · todos vao ver'}
               </button>
             </div>
           </motion.div>

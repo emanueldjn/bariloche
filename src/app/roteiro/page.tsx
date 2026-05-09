@@ -2,20 +2,8 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Lightbulb,
-  Loader,
-  MapPin,
-  Plus,
-  Trash2,
-  Wifi,
-  WifiOff,
-  X,
-} from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Clock, Lightbulb, MapPin, Plus, Trash2, X } from 'lucide-react';
+import SyncStatus from '@/components/SyncStatus';
 import { itinerary as defaultItinerary } from '@/data/itinerary';
 import { cityColorMap, tripCityGroups, tripMeta } from '@/data/trip';
 import { Activity } from '@/data/types';
@@ -77,8 +65,8 @@ function ActivityCard({ activity, onDelete }: { activity: Activity; onDelete?: (
           <div className="flex items-center gap-1 shrink-0">
             {onDelete && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={(event) => {
+                  event.stopPropagation();
                   onDelete();
                 }}
                 className="p-1.5 rounded-lg"
@@ -111,7 +99,7 @@ function ActivityCard({ activity, onDelete }: { activity: Activity; onDelete?: (
                   href={`https://maps.google.com/?q=${activity.coordinates[0]},${activity.coordinates[1]}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
                   style={{ background: '#eff6ff', border: '1px solid #bfdbfe', color: '#2563eb' }}
                 >
@@ -137,7 +125,8 @@ export default function RoteiroPage() {
     description: '',
     tips: '',
   });
-  const { data, loading, online, update } = useSharedData();
+  const { data, syncMessage, syncState, update } = useSharedData();
+  const saving = syncState === 'connecting' || syncState === 'syncing';
 
   const day = defaultItinerary[activeDay];
   const cityColor = day.city ? cityColorMap[day.city] || '#3b82f6' : '#3b82f6';
@@ -186,17 +175,19 @@ export default function RoteiroPage() {
     }
 
     const prev = data.customActivities[day.date] || [];
-    await update({ customActivities: { ...data.customActivities, [day.date]: [...prev, activity] } });
+    const saved = await update({ customActivities: { ...data.customActivities, [day.date]: [...prev, activity] } });
 
-    setNewActivity({
-      title: '',
-      time: '10:00',
-      category: 'passeio',
-      location: '',
-      description: '',
-      tips: '',
-    });
-    setShowAddForm(false);
+    if (saved) {
+      setNewActivity({
+        title: '',
+        time: '10:00',
+        category: 'passeio',
+        location: '',
+        description: '',
+        tips: '',
+      });
+      setShowAddForm(false);
+    }
   };
 
   const daysByCityGroup: { city: string; days: Array<(typeof defaultItinerary)[number] & { _idx: number }> }[] = [];
@@ -216,33 +207,16 @@ export default function RoteiroPage() {
   return (
     <main className="pb-safe">
       <div className="px-4 pt-6 pb-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold gradient-text" style={{ fontFamily: 'Poppins, sans-serif' }}>
               📅 Roteiro
             </h1>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-              {tripMeta.dateRangeLabel} · {tripCityGroups.filter((group) => defaultItinerary.some((dayItem) => dayItem.city?.includes(group.match))).length} destinos · {defaultItinerary.length} dias
+              {tripMeta.dateRangeLabel} - {tripCityGroups.filter((group) => defaultItinerary.some((dayItem) => dayItem.city?.includes(group.match))).length} destinos - {defaultItinerary.length} dias
             </p>
           </div>
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-            style={{
-              background: loading ? '#f9fafb' : online ? '#f0fdf4' : '#fef2f2',
-              border: `1px solid ${loading ? '#e5e7eb' : online ? '#bbf7d0' : '#fecaca'}`,
-            }}
-          >
-            {loading ? (
-              <Loader size={11} style={{ color: '#9ca3af' }} className="animate-spin" />
-            ) : online ? (
-              <Wifi size={11} style={{ color: '#059669' }} />
-            ) : (
-              <WifiOff size={11} style={{ color: '#dc2626' }} />
-            )}
-            <span className="text-[10px] font-bold" style={{ color: loading ? '#9ca3af' : online ? '#059669' : '#dc2626' }}>
-              {loading ? 'Conectando...' : online ? 'Ao vivo' : 'Offline'}
-            </span>
-          </div>
+          <SyncStatus state={syncState} message={syncMessage} compact />
         </div>
       </div>
 
@@ -294,7 +268,7 @@ export default function RoteiroPage() {
           <div className="rounded-2xl p-4 flex items-center justify-between" style={{ background: `${cityColor}10`, border: `1px solid ${cityColor}25` }}>
             <div>
               <p className="text-xs font-bold uppercase tracking-wide" style={{ color: cityColor }}>
-                {day.dayLabel} · {day.weekday} · {day.shortDate}
+                {day.dayLabel} - {day.weekday} - {day.shortDate}
               </p>
               <p className="text-sm font-semibold mt-0.5">{day.city}</p>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -341,7 +315,7 @@ export default function RoteiroPage() {
                     type="text"
                     placeholder={field.placeholder}
                     value={(newActivity as Record<string, string>)[field.key]}
-                    onChange={(e) => setNewActivity({ ...newActivity, [field.key]: e.target.value })}
+                    onChange={(event) => setNewActivity({ ...newActivity, [field.key]: event.target.value })}
                     className="w-full rounded-xl px-3.5 py-2.5 text-sm"
                     style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', color: 'var(--text-primary)' }}
                   />
@@ -353,7 +327,7 @@ export default function RoteiroPage() {
                 </label>
                 <select
                   value={newActivity.category}
-                  onChange={(e) => setNewActivity({ ...newActivity, category: e.target.value })}
+                  onChange={(event) => setNewActivity({ ...newActivity, category: event.target.value })}
                   className="w-full rounded-xl px-3.5 py-2.5 text-sm"
                   style={{ background: '#f9fafb', border: '1.5px solid #e5e7eb', color: 'var(--text-primary)' }}
                 >
@@ -367,10 +341,14 @@ export default function RoteiroPage() {
               <div className="flex gap-2">
                 <button
                   onClick={addActivity}
+                  disabled={saving}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-1.5"
-                  style={{ background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' }}
+                  style={{
+                    background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                    opacity: saving ? 0.8 : 1,
+                  }}
                 >
-                  <Check size={14} /> Salvar para o grupo
+                  <Check size={14} /> {saving ? 'Salvando...' : 'Salvar para o grupo'}
                 </button>
                 <button
                   onClick={() => setShowAddForm(false)}
@@ -388,7 +366,7 @@ export default function RoteiroPage() {
               className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2"
               style={{ background: '#eff6ff', border: '1.5px dashed #bfdbfe', color: '#2563eb' }}
             >
-              <Plus size={16} /> Adicionar atividade · todos vao ver
+              <Plus size={16} /> Adicionar atividade - todos vao ver
             </motion.button>
           )}
         </motion.div>
